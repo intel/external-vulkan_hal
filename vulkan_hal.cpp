@@ -59,12 +59,11 @@ static VkResult EnumerateInstanceExtensionProperties(
                                                              properties);
 }
 
-static PFN_vkVoidFunction GetInstanceProcAddr(VkInstance instance,
-                                              const char* name) {
+static PFN_vkVoidFunction GetDeviceProcAddr(VkDevice device, const char* name) {
   PFN_vkVoidFunction pfn;
 
   if ((pfn = reinterpret_cast<PFN_vkVoidFunction>(
-           mesa_vulkan::vkGetInstanceProcAddr(instance, name)))) {
+           mesa_vulkan::vkGetDeviceProcAddr(device, name)))) {
     return pfn;
   }
 
@@ -76,6 +75,21 @@ static PFN_vkVoidFunction GetInstanceProcAddr(VkInstance instance,
 
   if (strcmp(name, "vkQueueSignalReleaseImageANDROID") == 0)
     return reinterpret_cast<PFN_vkVoidFunction>(QueueSignalReleaseImageANDROID);
+
+  return nullptr;
+}
+
+static PFN_vkVoidFunction GetInstanceProcAddr(VkInstance instance,
+                                              const char* name) {
+  PFN_vkVoidFunction pfn;
+
+  if (strcmp(name, "vkGetDeviceProcAddr") == 0)
+    return reinterpret_cast<PFN_vkVoidFunction>(GetDeviceProcAddr);
+
+  if ((pfn = reinterpret_cast<PFN_vkVoidFunction>(
+           mesa_vulkan::vkGetInstanceProcAddr(instance, name)))) {
+    return pfn;
+  }
 
   return nullptr;
 }

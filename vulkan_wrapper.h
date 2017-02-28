@@ -25,6 +25,7 @@ bool InitializeVulkan();
 void Close();
 
 extern PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
+extern PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;
 extern PFN_vkCreateInstance vkCreateInstance;
 extern PFN_vkEnumerateInstanceExtensionProperties
     vkEnumerateInstanceExtensionProperties;
