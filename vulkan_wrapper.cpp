@@ -59,6 +59,14 @@ bool InitializeVulkan() {
     return false;
   }
 
+  vkGetDeviceProcAddr = reinterpret_cast<PFN_vkGetDeviceProcAddr>(
+      vkGetInstanceProcAddr(NULL, "vkGetDeviceProcAddr"));
+
+  if (vkGetDeviceProcAddr == NULL) {
+    ALOGE("Could not find vkGetDeviceProcAddr symbol. %s", dlerror());
+    return false;
+  }
+
   return true;
 }
 
@@ -69,11 +77,13 @@ void Close() {
     vkEnumerateInstanceExtensionProperties = NULL;
     vkCreateInstance = NULL;
     vkGetInstanceProcAddr = NULL;
+    vkGetDeviceProcAddr = NULL;
   }
 }
 
 PFN_vkCreateInstance vkCreateInstance;
 PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
+PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;
 PFN_vkEnumerateInstanceExtensionProperties
     vkEnumerateInstanceExtensionProperties;
 }
