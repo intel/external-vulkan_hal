@@ -21,6 +21,7 @@
 #include <vulkan/vk_android_native_buffer.h>
 
 #include "vulkan_wrapper.h"
+#include "vulkan/vulkan_intel.h"
 
 static VkResult GetSwapchainGrallocUsageANDROID(VkDevice /*dev*/,
                                                 VkFormat /*fmt*/,
@@ -46,6 +47,60 @@ static VkResult QueueSignalReleaseImageANDROID(VkQueue /*queue*/,
   return VK_SUCCESS;
 }
 
+static VkResult CreateImage(VkDevice device,
+                            const VkImageCreateInfo *pCreateInfo,
+                            const VkAllocationCallbacks *pAllocator,
+                            VkImage *pImage)
+{
+  static PFN_vkCreateDmaBufImageINTEL dmabufFunc =
+    reinterpret_cast<PFN_vkCreateDmaBufImageINTEL>(
+      mesa_vulkan::vkGetDeviceProcAddr(device, "vkCreateDmaBufImageINTEL"));
+
+  if (!pfn || !pCreateInfo->pNext) {
+    ALOGE("ANDROID extension structure not found");
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
+  }
+
+  const VkImageCreateInfo *p =
+    reinterpret_cast<const VkImageCreateInfo *>(pCreateInfo->pNext);
+
+ // we hardcode VK_STRUCTURE_TYPE_NATIVE_BUFFER_ANDROID for now as
+ // vk_android_native_buffer.h is using old style cast
+  while (p && p->sType != 1000010000)
+    p = reinterpret_cast<const VkImageCreateInfo *>(p->pNext);
+
+  if (!p) {
+    ALOGE("VK_ANDROID_native_buffer extension structure not found");
+    return VK_ERROR_EXTENSION_NOT_PRESENT;
+  }
+
+  const VkNativeBufferANDROID *buffer =
+    reinterpret_cast<const VkNativeBufferANDROID *>(pCreateInfo->pNext);
+
+  const native_handle_t *handle =
+    reinterpret_cast<const native_handle_t *>(buffer->handle);
+
+  VkDeviceMemory pMem;
+  VkDmaBufImageCreateInfo dmabufInfo = {
+    .sType = static_cast<VkStructureType>(VK_STRUCTURE_TYPE_DMA_BUF_IMAGE_CREATE_INFO_INTEL),
+    .pNext = NULL,
+    .fd = handle->data[0],
+    .format = pCreateInfo->format,
+    .extent = {
+      .width = pCreateInfo->extent.width,
+      .height = pCreateInfo->extent.height,
+      .depth = pCreateInfo->extent.depth,
+    },
+    .strideInBytes = static_cast<uint32_t>(buffer->stride),
+  };
+
+  return dmabufFunc(device,
+                    &dmabufInfo,
+                    pAllocator,
+                    &pMem,
+                    pImage);
+}
+
 static int CloseDevice(struct hw_device_t* dev) {
   mesa_vulkan::Close();
   delete dev;
@@ -61,6 +116,11 @@ static VkResult EnumerateInstanceExtensionProperties(
 
 static PFN_vkVoidFunction GetDeviceProcAddr(VkDevice device, const char* name) {
   PFN_vkVoidFunction pfn;
+
+  /* wrap vkCreateImage to use vkCreateDmaBufImageINTEL */
+  if (strcmp(name, "vkCreateImage") == 0 ) {
+    return reinterpret_cast<PFN_vkVoidFunction>(CreateImage);
+  }
 
   if ((pfn = reinterpret_cast<PFN_vkVoidFunction>(
            mesa_vulkan::vkGetDeviceProcAddr(device, name)))) {
