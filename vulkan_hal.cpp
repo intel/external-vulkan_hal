@@ -56,7 +56,8 @@ static VkResult AcquireImageANDROID(VkDevice, VkImage /*dev*/,
 static VkResult QueueSignalReleaseImageANDROID(VkQueue /*queue*/,
                                                VkImage /*image*/,
                                                int* pNativeFenceFd) {
-  *pNativeFenceFd = -1;
+  if (pNativeFenceFd)
+    *pNativeFenceFd = -1;
   return VK_SUCCESS;
 }
 
