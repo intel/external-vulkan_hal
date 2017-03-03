@@ -25,10 +25,23 @@
 
 static VkResult GetSwapchainGrallocUsageANDROID(VkDevice /*dev*/,
                                                 VkFormat /*fmt*/,
-                                                VkImageUsageFlags /*usage*/,
+                                                VkImageUsageFlags usage,
                                                 int* grallocUsage) {
-  *grallocUsage =
-      GRALLOC_USAGE_HW_FB | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE;
+  VkImageUsageFlags usageSrc =
+    VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT |
+    VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+
+  VkImageUsageFlags usageDst =
+    VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+  // used for texturing
+  if (usage & usageSrc)
+    *grallocUsage |= GRALLOC_USAGE_HW_TEXTURE;
+
+  // used for rendering
+  if (usage & usageDst)
+    *grallocUsage |= GRALLOC_USAGE_HW_RENDER;
+
   return VK_SUCCESS;
 }
 
