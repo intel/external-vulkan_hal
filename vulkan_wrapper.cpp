@@ -27,7 +27,7 @@ bool InitializeVulkan() {
   if (LibraryHandle)
     return true;
 
-  LibraryHandle = dlopen("vulkan.mesa_intel.so", RTLD_NOW);
+  LibraryHandle = dlopen("libvulkan_intel.so", RTLD_NOW);
 
   if (LibraryHandle == NULL) {
     ALOGE("Failed to load Vulkan library. %s", dlerror());
