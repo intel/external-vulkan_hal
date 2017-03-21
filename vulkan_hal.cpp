@@ -19,6 +19,7 @@
 #include <hardware/hwvulkan.h>
 #include <hardware/gralloc.h>
 #include <vulkan/vk_android_native_buffer.h>
+#include <sync/sync.h>
 
 #include "vulkan_wrapper.h"
 #include "vulkan/vulkan_intel.h"
@@ -49,6 +50,9 @@ static VkResult AcquireImageANDROID(VkDevice, VkImage /*dev*/,
                                     int nativeFenceFd,
                                     VkSemaphore /*semaphore*/,
                                     VkFence /*fence*/) {
+  // wait for fence to signal before acquiring image
+  sync_wait(nativeFenceFd, -1);
+
   close(nativeFenceFd);
   return VK_SUCCESS;
 }
