@@ -36,7 +36,7 @@ LOCAL_C_INCLUDES := \
 	frameworks/native/vulkan/include \
 	$(LOCAL_PATH)/../mesa/include
 
-LOCAL_SHARED_LIBRARIES := libvulkan liblog libdl libcutils
+LOCAL_SHARED_LIBRARIES := libvulkan liblog libdl libcutils libsync
 
 LOCAL_MODULE := vulkan.$(TARGET_BOARD_PLATFORM)
 #Prefered path for Vulkan is /vendor/lib/hw

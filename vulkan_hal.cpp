@@ -19,7 +19,10 @@
 #include <hardware/hwvulkan.h>
 #include <hardware/gralloc.h>
 #include <vulkan/vk_android_native_buffer.h>
+#include <sync/sync.h>
 
+
+#include <fcntl.h>
 #include "vulkan_wrapper.h"
 #include "vulkan/vulkan_intel.h"
 
@@ -49,16 +52,24 @@ static VkResult AcquireImageANDROID(VkDevice, VkImage /*dev*/,
                                     int nativeFenceFd,
                                     VkSemaphore /*semaphore*/,
                                     VkFence /*fence*/) {
+  // wait for fence to signal before acquiring image
+  sync_wait(nativeFenceFd, -1);
+
   close(nativeFenceFd);
   return VK_SUCCESS;
 }
 
-static VkResult QueueSignalReleaseImageANDROID(VkQueue /*queue*/,
-                                               VkImage /*image*/,
+static VkResult QueueSignalReleaseImageANDROID(VkQueue /* queue */,
+                                               VkImage /* image */,
                                                int* pNativeFenceFd) {
-  if (pNativeFenceFd)
-    *pNativeFenceFd = -1;
-  return VK_SUCCESS;
+    if (pNativeFenceFd) {
+        int ret = open("/dev/sw_sync", O_RDWR); //sw_sync_timeline_create();
+        if (ret < 0) {
+            ALOGE("Failed to create sw sync timeline %d", ret);
+        }
+        *pNativeFenceFd = ret;
+    }
+    return VK_SUCCESS;
 }
 
 static VkResult CreateImage(VkDevice device,
