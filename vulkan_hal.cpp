@@ -109,7 +109,10 @@ static VkResult CreateImage(VkDevice device,
           .height = pCreateInfo->extent.height,
           .depth = pCreateInfo->extent.depth,
       },
-      .strideInBytes = static_cast<uint32_t>(buffer->stride),
+      // FIXME magic, we know this surface tiling to be I915_TILING_X and
+      // take this in to account when giving stride, Mesa will internally
+      // use this exact value as row pitch validation for the surface.
+      .strideInBytes = static_cast<uint32_t>(buffer->stride * 4),
   };
 
   return dmabufFunc(device, &dmabufInfo, pAllocator, &pMem, pImage);
