@@ -58,6 +58,8 @@ static VkResult AcquireImageANDROID(VkDevice, VkImage /*dev*/,
 }
 
 static VkResult QueueSignalReleaseImageANDROID(VkQueue /*queue*/,
+                                               uint32_t /*waitSemaphoreCount*/,
+                                               const VkSemaphore* /*pWaitSemaphores */,
                                                VkImage /*image*/,
                                                int* pNativeFenceFd) {
   if (pNativeFenceFd)
